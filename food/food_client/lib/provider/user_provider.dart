@@ -59,13 +59,12 @@ class UserProvider extends ChangeNotifier {
   // }
 
   Future<void> getDetails() async {
-    final data = await firestore
+    await firestore
         .collection('users')
         .doc(usr!.uid)
         .collection('details')
         .doc(usr!.uid)
         .get();
-    var doc = data.data();
   }
 
   void signUp(BuildContext context) async {
