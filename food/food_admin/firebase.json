@@ -1,0 +1,9 @@
+{
+  "firestore": {
+    "rules": "all files",
+    "indexes": "all files"
+  },
+  "storage": {
+    "rules": "all files"
+  }
+}
