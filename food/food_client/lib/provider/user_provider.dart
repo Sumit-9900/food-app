@@ -15,44 +15,15 @@ import 'package:uuid/uuid.dart';
 FirebaseAuth auth = FirebaseAuth.instance;
 
 class UserProvider extends ChangeNotifier {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
-  TextEditingController emailController1 = TextEditingController();
-  TextEditingController passController1 = TextEditingController();
-  TextEditingController forgotemail = TextEditingController();
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   bool isLoading = false;
-  FocusNode namefocusNode = FocusNode();
-  FocusNode emailfocusNode = FocusNode();
-  FocusNode passfocusNode = FocusNode();
-  FocusNode emailfocusNode1 = FocusNode();
-  FocusNode passfocusNode1 = FocusNode();
-  FocusNode forgotfocusNode = FocusNode();
   DocumentReference? docRef;
   File? _selectedImage;
   File? get selectedImage => _selectedImage;
   UserCredential? userCredential;
   User? usr = auth.currentUser;
-  String namee = '';
-  String emaill = '';
   int _currentPage = 0;
   int get currentPage => _currentPage;
-
-  @override
-  void dispose() {
-    super.dispose();
-    nameController.dispose();
-    emailController.dispose();
-    passController.dispose();
-    emailController1.dispose();
-    passController1.dispose();
-    passfocusNode.dispose();
-    namefocusNode.dispose();
-    emailfocusNode.dispose();
-    forgotemail.dispose();
-    forgotfocusNode.dispose();
-  }
 
   void pageIndex(int value) {
     _currentPage = value;
@@ -68,25 +39,22 @@ class UserProvider extends ChangeNotifier {
         .get();
   }
 
-  void signUp(BuildContext context) async {
-    if (emailController.text.isNotEmpty ||
-        passController.text.isNotEmpty ||
-        nameController.text.isNotEmpty) {
+  void signUp(BuildContext context,
+      {required String email,
+      required String password,
+      required String name}) async {
+    if (email.isNotEmpty || password.isNotEmpty || name.isNotEmpty) {
       try {
         isLoading = true;
         notifyListeners();
 
-        namee = nameController.text.trim();
-        emaill = emailController.text.trim();
-
         userCredential = await auth.createUserWithEmailAndPassword(
-          email: emaill,
-          password: passController.text.trim(),
+          email: email,
+          password: password,
         );
 
-        addDetails();
+        addDetails(name: name, email: email);
 
-        // log('UserCredentail :- ${userCredential!.user!.uid}');
         if (userCredential != null &&
             userCredential!.user != null &&
             context.mounted) {
@@ -123,15 +91,9 @@ class UserProvider extends ChangeNotifier {
     }
     isLoading = false;
     notifyListeners();
-    nameController.clear();
-    emailController.clear();
-    passController.clear();
-    namefocusNode.unfocus();
-    emailfocusNode.unfocus();
-    passfocusNode.unfocus();
   }
 
-  void addDetails() async {
+  void addDetails({required String name, required String email}) async {
     if (usr == null) {
       return;
     }
@@ -141,21 +103,24 @@ class UserProvider extends ChangeNotifier {
         .collection('details')
         .doc(userCredential!.user!.uid)
         .set({
-      'username': namee,
-      'email': emaill,
+      'username': name,
+      'email': email,
     });
-    // log('UserUID :-${user!.uid}');
   }
 
-  void logIn(BuildContext context) async {
-    if (emailController1.text.isNotEmpty || passController1.text.isNotEmpty) {
+  void logIn(
+    BuildContext context, {
+    required String email,
+    required String password,
+  }) async {
+    if (email.isNotEmpty || password.isNotEmpty) {
       try {
         isLoading = true;
         notifyListeners();
 
         UserCredential userCredential = await auth.signInWithEmailAndPassword(
-          email: emailController1.text,
-          password: passController1.text,
+          email: email,
+          password: password,
         );
         if (userCredential.user != null && context.mounted) {
           Navigator.of(context).push(
@@ -191,16 +156,15 @@ class UserProvider extends ChangeNotifier {
     }
     isLoading = false;
     notifyListeners();
-    emailController1.clear();
-    passController1.clear();
-    emailfocusNode1.unfocus();
-    passfocusNode1.unfocus();
   }
 
-  Future<void> resetPassword() async {
-    if (forgotemail.text.isNotEmpty) {
+  void resetPassword(String email) async {
+    if (email.isNotEmpty) {
       try {
-        await auth.sendPasswordResetEmail(email: forgotemail.text);
+        isLoading = true;
+        notifyListeners();
+
+        await auth.sendPasswordResetEmail(email: email);
         Fluttertoast.showToast(
           msg: 'Password reset email sent Successfully!!!',
           backgroundColor: Colors.green,
@@ -226,8 +190,8 @@ class UserProvider extends ChangeNotifier {
         fontSize: 16,
       );
     }
-    forgotemail.clear();
-    forgotfocusNode.unfocus();
+    isLoading = false;
+    notifyListeners();
   }
 
   Future<void> logOut(BuildContext context) async {
