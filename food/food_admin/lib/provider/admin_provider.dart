@@ -10,19 +10,15 @@ class AdminProvider extends ChangeNotifier {
   String get user => _user;
 
   String _pass = '';
-  String get pass => _pass; 
+  String get pass => _pass;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   Future<void> login() async {
-    QuerySnapshot<Map<String, dynamic>> snapshots =
-        await firestore.collection('admin').get();
-
-    _user = snapshots.docs[0]['username'];
-    _pass = snapshots.docs[0]['password'];
-
+    _isLoading = true;
     notifyListeners();
-  }
 
-  Future<void> checkLoggedIn() async {
     QuerySnapshot<Map<String, dynamic>> snapshots =
         await firestore.collection('admin').get();
 
@@ -30,14 +26,29 @@ class AdminProvider extends ChangeNotifier {
     _pass = snapshots.docs[0]['password'];
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('admindata', [user, pass]);
+    await prefs.setStringList('admindata', [_user, _pass]);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> checkLoggedIn() async {
+    // QuerySnapshot<Map<String, dynamic>> snapshots =
+    //     await firestore.collection('admin').get();
+
+    // _user = snapshots.docs[0]['username'];
+    // _pass = snapshots.docs[0]['password'];
+
+    final prefs = await SharedPreferences.getInstance();
+    // await prefs.setStringList('admindata', [_user, _pass]);
 
     adminData = prefs.getStringList('admindata');
 
     notifyListeners();
   }
 
-  void logout() {
-    adminData = null;
+  Future<bool> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    return await prefs.clear();
   }
 }

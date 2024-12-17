@@ -1,17 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:food_admin/pages/add_product_page.dart';
 import 'package:food_admin/style/textstyle.dart';
 import 'package:food_admin/widgets/mydrawer.dart';
 
-class AdminPage extends ConsumerWidget {
+class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     FirebaseStorage storage = FirebaseStorage.instance;
     return Scaffold(
@@ -34,7 +34,7 @@ class AdminPage extends ConsumerWidget {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.grey,
-                        backgroundImage: NetworkImage(
+                        backgroundImage: CachedNetworkImageProvider(
                           snapshot.data!.docs[index]['productImage'],
                         ),
                       ),

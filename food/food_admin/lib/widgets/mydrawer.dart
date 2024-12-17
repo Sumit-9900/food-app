@@ -30,20 +30,31 @@ class MyDrawer extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {
-                  adminProvider.logout();
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
-                  );
-                  Fluttertoast.showToast(
-                    msg: 'Logout Successfull!!!',
-                    backgroundColor: Colors.green,
-                    toastLength: Toast.LENGTH_LONG,
-                    timeInSecForIosWeb: 3,
-                    fontSize: 16,
-                  );
+                onTap: () async {
+                  adminProvider.logout().then((isUserLogOut) {
+                    if (isUserLogOut && context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
+                      Fluttertoast.showToast(
+                        msg: 'Logout Successfull!!!',
+                        backgroundColor: Colors.green,
+                        toastLength: Toast.LENGTH_LONG,
+                        timeInSecForIosWeb: 3,
+                        fontSize: 16,
+                      );
+                    } else {
+                      Fluttertoast.showToast(
+                        msg: 'Logout Unsuccessfull!!!',
+                        backgroundColor: Colors.red,
+                        toastLength: Toast.LENGTH_LONG,
+                        timeInSecForIosWeb: 3,
+                        fontSize: 16,
+                      );
+                    }
+                  });
                 },
                 child: const ListTile(
                   leading: Icon(Icons.logout),

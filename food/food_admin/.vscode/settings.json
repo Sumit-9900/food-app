@@ -1,5 +1,5 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "cmake.sourceDirectory": "C:/Flutter_Course/food_app/food_admin/linux",
+    "cmake.sourceDirectory": "C:/Flutter_Course/food_app/food/food_admin/windows",
     "java.configuration.updateBuildConfiguration": "interactive"
 }

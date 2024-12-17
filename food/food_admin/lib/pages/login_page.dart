@@ -26,6 +26,52 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void onTap(AdminProvider adminProvider) {
+  if (_formkey.currentState!.validate()) {
+    _formkey.currentState!.save();
+    adminProvider.login().then((_) {
+      final user = adminProvider.user;
+      final pass = adminProvider.pass;
+
+      if (user.trim() != usercontroller.text.trim() ||
+          pass.trim() != passcontroller.text.trim()) {
+        Fluttertoast.showToast(
+          msg: 'The Username or Password are Invalid!!!',
+          backgroundColor: Colors.red,
+          toastLength: Toast.LENGTH_LONG,
+          timeInSecForIosWeb: 3,
+          fontSize: 16,
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const AdminPage(),
+          ),
+        );
+        Fluttertoast.showToast(
+          msg: 'Login Successful!!!',
+          backgroundColor: Colors.green,
+          toastLength: Toast.LENGTH_LONG,
+          timeInSecForIosWeb: 3,
+          fontSize: 16,
+        );
+
+        usercontroller.clear();
+        passcontroller.clear();
+      }
+    }).catchError((error) {
+      Fluttertoast.showToast(
+        msg: 'Something went wrong: $error',
+        backgroundColor: Colors.red,
+        toastLength: Toast.LENGTH_LONG,
+        timeInSecForIosWeb: 3,
+        fontSize: 16,
+      );
+    });
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,44 +169,13 @@ class _LoginPageState extends State<LoginPage> {
                           Consumer<AdminProvider>(
                             builder: (context, adminProvider, child) {
                               return GestureDetector(
-                                onTap: () {
-                                  if (_formkey.currentState!.validate()) {
-                                    _formkey.currentState!.save();
-                                    adminProvider.login();
-                                    final user = adminProvider.user;
-                                    final pass = adminProvider.pass;
-                                    if (user != usercontroller.text.trim() ||
-                                        pass != passcontroller.text.trim()) {
-                                      Fluttertoast.showToast(
-                                        msg:
-                                            'The Username or Password are Invalid!!!',
-                                        backgroundColor: Colors.red,
-                                        toastLength: Toast.LENGTH_LONG,
-                                        timeInSecForIosWeb: 3,
-                                        fontSize: 16,
-                                      );
-                                    } else {
-                                      MaterialPageRoute route =
-                                          MaterialPageRoute(
-                                        builder: (context) => const AdminPage(),
-                                      );
-                                      Navigator.of(context)
-                                          .pushReplacement(route);
-                                      Fluttertoast.showToast(
-                                        msg: 'Login Successfull!!!',
-                                        backgroundColor: Colors.green,
-                                        toastLength: Toast.LENGTH_LONG,
-                                        timeInSecForIosWeb: 3,
-                                        fontSize: 16,
-                                      );
-                                    }
-                                  }
-                                  usercontroller.clear();
-                                  passcontroller.clear();
-                                },
+                                onTap: adminProvider.isLoading
+                                    ? null
+                                    : () => onTap(adminProvider),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
+                                    horizontal: 12,
+                                  ),
                                   child: Container(
                                     height: 50,
                                     width: MediaQuery.of(context).size.width,
@@ -169,14 +184,17 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Center(
-                                      child: Text(
-                                        'Login',
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 22,
-                                        ),
-                                      ),
+                                      child: adminProvider.isLoading
+                                          ? const CircularProgressIndicator
+                                              .adaptive()
+                                          : Text(
+                                              'Login',
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 22,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
