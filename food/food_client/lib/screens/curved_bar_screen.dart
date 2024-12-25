@@ -16,11 +16,12 @@ class CurvedBarScreen extends StatefulWidget {
 class _CurvedBarScreenState extends State<CurvedBarScreen> {
   List<Widget> pages = [
     const HomeScreen(),
-    const FavoriteScreen(),
+    const FavoritesScreen(),
     const CartScreen(),
     const ProfileScreen(),
   ];
   int currentIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

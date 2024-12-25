@@ -12,16 +12,16 @@ import 'package:food_client/screens/signup_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
-FirebaseAuth auth = FirebaseAuth.instance;
-
 class UserProvider extends ChangeNotifier {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   bool isLoading = false;
   DocumentReference? docRef;
   File? _selectedImage;
   File? get selectedImage => _selectedImage;
-  UserCredential? userCredential;
-  User? usr = auth.currentUser;
+  FirebaseAuth auth = FirebaseAuth.instance;
+
+  User? getCurrentUser() => auth.currentUser;
+
   int _currentPage = 0;
   int get currentPage => _currentPage;
 
@@ -30,14 +30,14 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> getDetails() async {
-    await firestore
-        .collection('users')
-        .doc(usr!.uid)
-        .collection('details')
-        .doc(usr!.uid)
-        .get();
-  }
+  // Future<void> getDetails() async {
+  //   await firestore
+  //       .collection('users')
+  //       .doc(getCurrentUser()!.uid)
+  //       .collection('details')
+  //       .doc(getCurrentUser()!.uid)
+  //       .get();
+  // }
 
   void signUp(BuildContext context,
       {required String email,
@@ -48,16 +48,14 @@ class UserProvider extends ChangeNotifier {
         isLoading = true;
         notifyListeners();
 
-        userCredential = await auth.createUserWithEmailAndPassword(
+        final userCredential = await auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
 
         addDetails(name: name, email: email);
 
-        if (userCredential != null &&
-            userCredential!.user != null &&
-            context.mounted) {
+        if (userCredential.user != null && context.mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const CurvedBarScreen(),
@@ -94,18 +92,15 @@ class UserProvider extends ChangeNotifier {
   }
 
   void addDetails({required String name, required String email}) async {
-    if (usr == null) {
-      return;
+    if (getCurrentUser() != null) {
+      await firestore.collection('user_details').doc(getCurrentUser()!.uid).set(
+        {
+          'username': name,
+          'email': email,
+          'userImage': '',
+        },
+      );
     }
-    await firestore
-        .collection('users')
-        .doc(userCredential!.user!.uid)
-        .collection('details')
-        .doc(userCredential!.user!.uid)
-        .set({
-      'username': name,
-      'email': email,
-    });
   }
 
   void logIn(
@@ -118,10 +113,11 @@ class UserProvider extends ChangeNotifier {
         isLoading = true;
         notifyListeners();
 
-        UserCredential userCredential = await auth.signInWithEmailAndPassword(
+        final userCredential = await auth.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
+
         if (userCredential.user != null && context.mounted) {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -215,14 +211,20 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> deleteUser(BuildContext context) async {
-    try {
-      if (auth.currentUser != null) {
-        User? currentUser = auth.currentUser;
-        await currentUser!.delete();
+  try {
+    if (auth.currentUser != null) {
+      User? currentUser = auth.currentUser;
+
+      // Delete Firestore document first
+      if (docRef != null) {
         String docid = docRef!.id;
-        // log(docid);
-        await firestore.collection('user').doc(docid).delete();
+        await firestore.collection('user_details').doc(docid).delete();
       }
+
+      // Delete Firebase user
+      await currentUser!.delete();
+
+      // Navigate to sign-up screen
       if (context.mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -230,6 +232,7 @@ class UserProvider extends ChangeNotifier {
           ),
         );
       }
+
       Fluttertoast.showToast(
         msg: 'User Deleted Successfully!!!',
         backgroundColor: Colors.green,
@@ -237,18 +240,26 @@ class UserProvider extends ChangeNotifier {
         timeInSecForIosWeb: 3,
         fontSize: 16,
       );
-    } on FirebaseAuthException catch (e) {
-      Fluttertoast.showToast(
-        msg: e.code,
-        backgroundColor: Colors.green,
-        toastLength: Toast.LENGTH_LONG,
-        timeInSecForIosWeb: 3,
-        fontSize: 16,
-      );
     }
-    _selectedImage = null;
-    notifyListeners();
+  } on FirebaseAuthException catch (e) {
+    String errorMessage;
+    switch (e.code) {
+      case 'requires-recent-login':
+        errorMessage = 'Please log in again to delete your account.';
+        break;
+      default:
+        errorMessage = 'An unexpected error occurred: ${e.code}';
+    }
+    Fluttertoast.showToast(
+      msg: errorMessage,
+      backgroundColor: Colors.red,
+      toastLength: Toast.LENGTH_LONG,
+      timeInSecForIosWeb: 3,
+      fontSize: 16,
+    );
   }
+}
+
 
   Future<void> pickImage() async {
     ImagePicker picker = ImagePicker();
@@ -257,7 +268,6 @@ class UserProvider extends ChangeNotifier {
       File convertedImage = File(image.path);
       _selectedImage = convertedImage;
       log('Image selected');
-      // log(selectedImage.toString());
       sendImage();
       notifyListeners();
     } else {
@@ -273,17 +283,15 @@ class UserProvider extends ChangeNotifier {
         .putFile(_selectedImage!);
     TaskSnapshot taskSnapshot = await uploadTask;
     String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-    // log(downloadUrl);
-
-    // log('ImageUID :- ${user!.uid}');
 
     await FirebaseFirestore.instance
-        .collection('users')
-        .doc(usr!.uid)
-        .collection('profileImage')
-        .doc(usr!.uid)
-        .set({
-      'userImage': downloadUrl,
-    });
+        .collection('user_details')
+        .doc(getCurrentUser()!.uid)
+        .set(
+      {
+        'userImage': downloadUrl,
+      },
+      SetOptions(merge: true),
+    );
   }
 }

@@ -16,9 +16,9 @@ class CartProvider extends ChangeNotifier {
     if (!ids.contains(id)) {
       ids.add(id);
       await firestore
-          .collection('users')
+          .collection('products')
           .doc(user!.uid)
-          .collection('cartproducts')
+          .collection('cart_products')
           .add(data);
       Fluttertoast.showToast(
         msg: 'Product added to Cart!!',
@@ -40,9 +40,9 @@ class CartProvider extends ChangeNotifier {
 
   Future<void> deleteProductFromCart(String id) async {
     final data = await firestore
-        .collection('users')
+        .collection('products')
         .doc(user!.uid)
-        .collection('cartproducts')
+        .collection('cart_products')
         .get();
 
     for (var doc in data.docs) {
@@ -50,6 +50,9 @@ class CartProvider extends ChangeNotifier {
         await doc.reference.delete();
       }
     }
+
+    await getProduct();
+
     Fluttertoast.showToast(
       msg: 'Product deleted from Cart!!',
       backgroundColor: Colors.red,
@@ -62,9 +65,9 @@ class CartProvider extends ChangeNotifier {
   Future<void> getProduct() async {
     if (user != null) {
       final data = await firestore
-          .collection('users')
+          .collection('products')
           .doc(user!.uid)
-          .collection('cartproducts')
+          .collection('cart_products')
           .get();
 
       total = 0;

@@ -8,6 +8,10 @@ FirebaseAuth auth = FirebaseAuth.instance;
 User? usr = auth.currentUser;
 
 class FavoriteProductProvider extends ChangeNotifier {
+  FavoriteProductProvider() {
+    listenToFavorites();
+  }
+
   List<String> favoriteProductIds = [];
   bool toggle = false;
   List<String> docIds = [];
@@ -16,16 +20,21 @@ class FavoriteProductProvider extends ChangeNotifier {
     if (favoriteProductIds.contains(id)) {
       favoriteProductIds.remove(id);
       toggle = true;
+      notifyListeners();
+
       final data = await firestore
-          .collection('users')
+          .collection('products')
           .doc(usr!.uid)
-          .collection('favoriteproducts')
+          .collection('favorite_products')
           .get();
       for (var doc in data.docs) {
         if (doc.data()['id'] == id) {
           await doc.reference.delete();
         }
       }
+
+      await getData();
+
       Fluttertoast.showToast(
         msg: 'Product removed from Favorite!!!',
         backgroundColor: Colors.red,
@@ -36,11 +45,16 @@ class FavoriteProductProvider extends ChangeNotifier {
     } else {
       favoriteProductIds.add(id);
       toggle = false;
+      notifyListeners();
+
       await firestore
-          .collection('users')
+          .collection('products')
           .doc(usr!.uid)
-          .collection('favoriteproducts')
+          .collection('favorite_products')
           .add(data);
+
+      await getData();
+
       Fluttertoast.showToast(
         msg: 'Product added to Favorite!!!',
         backgroundColor: Colors.green,
@@ -49,19 +63,30 @@ class FavoriteProductProvider extends ChangeNotifier {
         fontSize: 16,
       );
     }
-    notifyListeners();
   }
 
   Future<void> getData() async {
     final data = await firestore
-        .collection('users')
+        .collection('products')
         .doc(usr!.uid)
-        .collection('favoriteproducts')
+        .collection('favorite_products')
         .get();
 
     for (var doc in data.docs) {
       docIds.add(doc['id']);
     }
     notifyListeners();
+  }
+
+  void listenToFavorites() {
+    firestore
+        .collection('products')
+        .doc(usr!.uid)
+        .collection('favorite_products')
+        .snapshots()
+        .listen((snapshot) {
+      docIds = snapshot.docs.map((doc) => doc['id'] as String).toList();
+      notifyListeners();
+    });
   }
 }

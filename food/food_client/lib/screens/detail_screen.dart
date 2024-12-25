@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:food_client/provider/cart_provider.dart';
@@ -71,8 +72,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.network(
-                        widget.image,
+                      CachedNetworkImage(
+                        imageUrl: widget.image,
                         fit: BoxFit.cover,
                         height: MediaQuery.of(context).size.height / 2.3,
                         width: MediaQuery.of(context).size.width,

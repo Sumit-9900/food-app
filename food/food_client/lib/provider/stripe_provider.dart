@@ -109,7 +109,9 @@ class StripeProvider extends ChangeNotifier {
     } on StripeException catch (e) {
       log(e.toString());
       Fluttertoast.showToast(
-        msg: 'Payment Failed!!!',
+        msg: e.error.code == FailureCode.Canceled
+            ? 'Payment Cancelled!!!'
+            : 'Payment Failed!!!',
         backgroundColor: Colors.red,
         toastLength: Toast.LENGTH_LONG,
         timeInSecForIosWeb: 3,
