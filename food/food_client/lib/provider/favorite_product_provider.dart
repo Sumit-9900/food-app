@@ -9,12 +9,26 @@ User? usr = auth.currentUser;
 
 class FavoriteProductProvider extends ChangeNotifier {
   FavoriteProductProvider() {
+    listenToAuth();
     listenToFavorites();
   }
 
   List<String> favoriteProductIds = [];
   bool toggle = false;
   List<String> docIds = [];
+
+  void listenToAuth() {
+    auth.authStateChanges().listen((User? user) {
+      usr = user;
+      docIds.clear();
+
+      if (usr != null) {
+        getData();
+      }
+
+      notifyListeners();
+    });
+  }
 
   Future<void> addFavoriteProducts(Map<String, dynamic> data, String id) async {
     if (favoriteProductIds.contains(id)) {

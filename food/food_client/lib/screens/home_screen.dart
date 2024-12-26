@@ -239,15 +239,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _heading(FirebaseFirestore firestore, FirebaseAuth auth) {
     return StreamBuilder(
-      stream: firestore
-          .collection('user_details')
-          .doc(auth.currentUser!.uid)
-          .snapshots(),
+      stream: auth.currentUser == null
+          ? null
+          : firestore
+              .collection('user_details')
+              .doc(auth.currentUser!.uid)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           debugPrint('Error: ${snapshot.error}');
           return Container();
         } else if (!snapshot.hasData || snapshot.data == null) {
+          debugPrint('No Data!!!');
           return Container();
         }
 

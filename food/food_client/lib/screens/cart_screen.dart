@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:food_client/provider/cart_provider.dart';
 import 'package:food_client/provider/stripe_provider.dart';
@@ -16,12 +17,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final firestore = FirebaseFirestore.instance;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    context.read<CartProvider>().getProduct();
-  }
+  final auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +44,7 @@ class _CartScreenState extends State<CartScreen> {
                     );
                   } else if (snapshot.data == null) {
                     return Center(
-                      child: Text('Cart is empty', style: Style.text1),
+                      child: Text('No Data!!!', style: Style.text1),
                     );
                   }
                   List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
@@ -65,12 +61,16 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _cartCard(List<QueryDocumentSnapshot> docs) {
     return Expanded(
-      child: ListView.builder(
-        itemCount: docs.length,
-        itemBuilder: (context, index) {
-          return Cardd(index: index, docs: docs);
-        },
-      ),
+      child: docs.isEmpty
+          ? Center(
+              child: Text('Your cart is empty!!!', style: Style.text1),
+            )
+          : ListView.builder(
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                return Cardd(index: index, docs: docs);
+              },
+            ),
     );
   }
 

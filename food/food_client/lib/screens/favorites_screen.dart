@@ -25,19 +25,24 @@ class FavoritesScreen extends StatelessWidget {
             children: [
               const Appbar(title: 'Food Favorites'),
               StreamBuilder(
-                stream: firestore
-                    .collection('products')
-                    .doc(currentUser!.uid)
-                    .collection('favorite_products')
-                    .snapshots(),
+                stream: currentUser == null
+                    ? null
+                    : firestore
+                        .collection('products')
+                        .doc(currentUser.uid)
+                        .collection('favorite_products')
+                        .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   } else if (snapshot.data == null) {
-                    return Center(
-                      child: Text('No Favorites added!!!', style: Style.text1),
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height / 1.5,
+                      child: Center(
+                        child: Text('No Data!!!', style: Style.text1),
+                      ),
                     );
                   }
                   List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
@@ -53,12 +58,16 @@ class FavoritesScreen extends StatelessWidget {
 
   Widget _favoriteCard(List<QueryDocumentSnapshot<Object?>> docs) {
     return Expanded(
-      child: ListView.builder(
-        itemCount: docs.length,
-        itemBuilder: (context, index) {
-          return _card(context, index, docs);
-        },
-      ),
+      child: docs.isEmpty
+          ? Center(
+              child: Text('No Favorites added!!!', style: Style.text1),
+            )
+          : ListView.builder(
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                return _card(context, index, docs);
+              },
+            ),
     );
   }
 

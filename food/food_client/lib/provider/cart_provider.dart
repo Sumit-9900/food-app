@@ -8,10 +8,12 @@ FirebaseAuth auth = FirebaseAuth.instance;
 User? user = auth.currentUser;
 
 class CartProvider extends ChangeNotifier {
+  CartProvider() {
+    listenToCartChanges();
+  }
+
   List<String> ids = [];
-  List<String> docIds = [];
   double total = 0.0;
-  List cartProduct = [];
   Future<void> addProductToCart(Map<String, dynamic> data, String id) async {
     if (!ids.contains(id)) {
       ids.add(id);
@@ -51,8 +53,6 @@ class CartProvider extends ChangeNotifier {
       }
     }
 
-    await getProduct();
-
     Fluttertoast.showToast(
       msg: 'Product deleted from Cart!!',
       backgroundColor: Colors.red,
@@ -62,19 +62,23 @@ class CartProvider extends ChangeNotifier {
     );
   }
 
-  Future<void> getProduct() async {
-    if (user != null) {
-      final data = await firestore
-          .collection('products')
-          .doc(user!.uid)
-          .collection('cart_products')
-          .get();
-
-      total = 0;
-      for (var doc in data.docs) {
-        total += (double.parse(doc['price'] ?? 0) * (doc['count'] ?? 0));
+  void listenToCartChanges() {
+    auth.authStateChanges().listen((User? usr) {
+      if (usr != null) {
+        user = usr;
+        firestore
+            .collection('products')
+            .doc(user!.uid)
+            .collection('cart_products')
+            .snapshots()
+            .listen((snapshot) {
+          total = 0.0;
+          for (var doc in snapshot.docs) {
+            total += (double.parse(doc['price'] ?? 0) * (doc['count'] ?? 0));
+          }
+          notifyListeners();
+        });
       }
-    }
-    notifyListeners();
+    });
   }
 }

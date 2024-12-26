@@ -10,12 +10,11 @@ import 'package:food_client/screens/curved_bar_screen.dart';
 import 'package:food_client/screens/login_screen.dart';
 import 'package:food_client/screens/signup_screen.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:uuid/uuid.dart';
 
 class UserProvider extends ChangeNotifier {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+  FirebaseStorage storage = FirebaseStorage.instance;
   bool isLoading = false;
-  DocumentReference? docRef;
   File? _selectedImage;
   File? get selectedImage => _selectedImage;
   FirebaseAuth auth = FirebaseAuth.instance;
@@ -29,15 +28,6 @@ class UserProvider extends ChangeNotifier {
     _currentPage = value;
     notifyListeners();
   }
-
-  // Future<void> getDetails() async {
-  //   await firestore
-  //       .collection('users')
-  //       .doc(getCurrentUser()!.uid)
-  //       .collection('details')
-  //       .doc(getCurrentUser()!.uid)
-  //       .get();
-  // }
 
   void signUp(BuildContext context,
       {required String email,
@@ -211,55 +201,63 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> deleteUser(BuildContext context) async {
-  try {
-    if (auth.currentUser != null) {
-      User? currentUser = auth.currentUser;
+    try {
+      if (getCurrentUser() != null) {
+        final userDoc =
+            firestore.collection('products').doc(getCurrentUser()!.uid);
+        final userDocData = await userDoc.get();
 
-      // Delete Firestore document first
-      if (docRef != null) {
-        String docid = docRef!.id;
-        await firestore.collection('user_details').doc(docid).delete();
-      }
+        if (userDocData.exists) {
+          final imagePath = userDocData.data()?['userImage'];
+          if (imagePath != null && imagePath.isNotEmpty) {
+            try {
+              await storage.refFromURL(imagePath).delete();
+              debugPrint("User image deleted successfully.");
+            } catch (e) {
+              debugPrint("Failed to delete user image: $e");
+            }
+          }
+        }
 
-      // Delete Firebase user
-      await currentUser!.delete();
+        // Delete user details and subcollections
+        await firestore
+            .collection('user_details')
+            .doc(getCurrentUser()!.uid)
+            .delete();
+        await deleteSubcollections(userDoc, 'cart_products');
+        await deleteSubcollections(userDoc, 'favorite_products');
+        await userDoc.delete();
 
-      // Navigate to sign-up screen
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const SignUpScreen(),
-          ),
+        await getCurrentUser()!.delete();
+
+        Fluttertoast.showToast(
+          msg: 'User Deleted Successfully!!!',
+          backgroundColor: Colors.green,
+          toastLength: Toast.LENGTH_LONG,
         );
+
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const SignUpScreen(),
+            ),
+          );
+        }
       }
-
-      Fluttertoast.showToast(
-        msg: 'User Deleted Successfully!!!',
-        backgroundColor: Colors.green,
-        toastLength: Toast.LENGTH_LONG,
-        timeInSecForIosWeb: 3,
-        fontSize: 16,
-      );
+    } catch (e) {
+      debugPrint("Error deleting user: $e");
     }
-  } on FirebaseAuthException catch (e) {
-    String errorMessage;
-    switch (e.code) {
-      case 'requires-recent-login':
-        errorMessage = 'Please log in again to delete your account.';
-        break;
-      default:
-        errorMessage = 'An unexpected error occurred: ${e.code}';
-    }
-    Fluttertoast.showToast(
-      msg: errorMessage,
-      backgroundColor: Colors.red,
-      toastLength: Toast.LENGTH_LONG,
-      timeInSecForIosWeb: 3,
-      fontSize: 16,
-    );
   }
-}
 
+  Future<void> deleteSubcollections(
+      DocumentReference userDocRef, String collectionName) async {
+    final subcollectionRef = userDocRef.collection(collectionName);
+    final subcollectionDocs = await subcollectionRef.get();
+
+    for (final doc in subcollectionDocs.docs) {
+      await doc.reference.delete();
+    }
+  }
 
   Future<void> pickImage() async {
     ImagePicker picker = ImagePicker();
@@ -279,7 +277,7 @@ class UserProvider extends ChangeNotifier {
     UploadTask uploadTask = FirebaseStorage.instance
         .ref()
         .child('profile-pic')
-        .child(const Uuid().v4())
+        .child(getCurrentUser()!.uid)
         .putFile(_selectedImage!);
     TaskSnapshot taskSnapshot = await uploadTask;
     String downloadUrl = await taskSnapshot.ref.getDownloadURL();

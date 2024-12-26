@@ -48,9 +48,28 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Quick Foodie',
       debugShowCheckedModeBanner: false,
-      home: FirebaseAuth.instance.currentUser != null
-          ? const CurvedBarScreen()
-          : const OnBoardScreen(),
+      home: StreamBuilder(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          } else if (snapshot.hasData) {
+            return const CurvedBarScreen();
+          } else if (snapshot.hasError) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Something went wrong!!!'),
+              ),
+            );
+          } else {
+            return const OnBoardScreen();
+          }
+        },
+      ),
     );
   }
 }
