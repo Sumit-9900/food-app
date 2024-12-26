@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:food_client/provider/cart_provider.dart';
 import 'package:food_client/provider/stripe_provider.dart';
@@ -10,20 +9,14 @@ import 'package:food_client/widgets/app_bar.dart';
 import 'package:food_client/widgets/cardd.dart';
 import 'package:provider/provider.dart';
 
-class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
-
-  @override
-  State<CartScreen> createState() => _CartScreenState();
-}
-
-class _CartScreenState extends State<CartScreen> {
-  final firestore = FirebaseFirestore.instance;
-  final auth = FirebaseAuth.instance;
+// ignore: must_be_immutable
+class CartScreen extends StatelessWidget {
+  CartScreen({super.key});
   String orderId = '';
 
   @override
   Widget build(BuildContext context) {
+    final firestore = FirebaseFirestore.instance;
     return Scaffold(
       body: Container(
         height: MediaQuery.of(context).size.height,

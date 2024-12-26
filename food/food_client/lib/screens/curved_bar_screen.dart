@@ -17,7 +17,7 @@ class _CurvedBarScreenState extends State<CurvedBarScreen> {
   List<Widget> pages = [
     const HomeScreen(),
     const FavoritesScreen(),
-    const CartScreen(),
+    CartScreen(),
     const ProfileScreen(),
   ];
   int currentIndex = 0;
