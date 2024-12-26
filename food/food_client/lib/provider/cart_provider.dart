@@ -62,6 +62,13 @@ class CartProvider extends ChangeNotifier {
     );
   }
 
+  void storeOrdersToFirestore(Map<String, dynamic> data) async {
+    await firestore
+        .collection('order_details')
+        .doc(user!.uid)
+        .set(data, SetOptions(merge: true));
+  }
+
   void listenToCartChanges() {
     auth.authStateChanges().listen((User? usr) {
       if (usr != null) {

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +20,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final firestore = FirebaseFirestore.instance;
   final auth = FirebaseAuth.instance;
+  String orderId = '';
 
   @override
   Widget build(BuildContext context) {
@@ -28,31 +31,31 @@ class _CartScreenState extends State<CartScreen> {
         padding: const EdgeInsets.only(top: 50.0),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Column(
-            children: [
-              const Appbar(title: 'Food Cart'),
-              StreamBuilder(
-                stream: firestore
-                    .collection('products')
-                    .doc(user!.uid)
-                    .collection('cart_products')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (snapshot.data == null) {
-                    return Center(
-                      child: Text('No Data!!!', style: Style.text1),
-                    );
-                  }
-                  List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
-                  return _cartCard(docs);
-                },
-              ),
-              _cartTotal(context)
-            ],
+          child: StreamBuilder(
+            stream: firestore
+                .collection('products')
+                .doc(user!.uid)
+                .collection('cart_products')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              } else if (snapshot.data == null) {
+                return Center(
+                  child: Text('No Data!!!', style: Style.text1),
+                );
+              }
+              List<QueryDocumentSnapshot> docs = snapshot.data!.docs;
+              return Column(
+                children: [
+                  const Appbar(title: 'Food Cart'),
+                  _cartCard(docs),
+                  _cartTotal(context, docs),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -74,7 +77,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _cartTotal(BuildContext context) {
+  Widget _cartTotal(BuildContext context, List<QueryDocumentSnapshot> docs) {
     return Material(
       elevation: 2.0,
       child: Container(
@@ -110,6 +113,13 @@ class _CartScreenState extends State<CartScreen> {
                       onTap: () async {
                         await stripeProvider
                             .displayPaymentSheet(cartProvider.total.toInt());
+                        if (stripeProvider.data == null && context.mounted) {
+                          showOrderSuccessDialog(context);
+                          cartProvider.storeOrdersToFirestore({
+                            'order_id': orderId,
+                            'timestamp': FieldValue.serverTimestamp(),
+                          });
+                        }
                       },
                       child: Container(
                         height: 50,
@@ -134,5 +144,79 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ),
     );
+  }
+
+  void showOrderSuccessDialog(BuildContext context) {
+    orderId = generateOrderId();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.35,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 10),
+                const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 100,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Order Placed Successfully',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'with Order ID $orderId',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.red,
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String generateOrderId() {
+    const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final Random random = Random();
+
+    // Generate a random 6-character alphanumeric string
+    String randomString =
+        List.generate(6, (index) => chars[random.nextInt(chars.length)]).join();
+
+    // Get the current timestamp in milliseconds since epoch
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    // Combine timestamp and random string for a unique order ID
+    return 'ORD-$timestamp-$randomString';
   }
 }

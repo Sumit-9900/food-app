@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           icon: favoriteProvider.docIds
                                   .contains(product['productId'])
-                              ? const Icon(Icons.favorite)
+                              ? const Icon(Icons.favorite, color: Colors.red)
                               : const Icon(Icons.favorite_outline),
                         );
                       },

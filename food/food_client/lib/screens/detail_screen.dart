@@ -55,7 +55,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   );
                 },
                 icon: value.docIds.contains(widget.id)
-                    ? const Icon(Icons.favorite)
+                    ? const Icon(Icons.favorite, color: Colors.red)
                     : const Icon(Icons.favorite_outline),
               );
             },

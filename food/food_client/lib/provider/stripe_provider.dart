@@ -97,15 +97,14 @@ class StripeProvider extends ChangeNotifier {
     try {
       await Stripe.instance.presentPaymentSheet().then((e) {
         data = null;
+        Fluttertoast.showToast(
+          msg: 'Payment Successfully Done!!!',
+          backgroundColor: Colors.green,
+          toastLength: Toast.LENGTH_LONG,
+          timeInSecForIosWeb: 3,
+          fontSize: 16,
+        );
       });
-
-      Fluttertoast.showToast(
-        msg: 'Payment Successfully Done!!!',
-        backgroundColor: Colors.green,
-        toastLength: Toast.LENGTH_LONG,
-        timeInSecForIosWeb: 3,
-        fontSize: 16,
-      );
     } on StripeException catch (e) {
       log(e.toString());
       Fluttertoast.showToast(
