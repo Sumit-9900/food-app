@@ -19,4 +19,10 @@ class Style {
     fontWeight: FontWeight.w400,
     color: Colors.black,
   );
+
+  static TextStyle text3 = GoogleFonts.poppins(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
 }

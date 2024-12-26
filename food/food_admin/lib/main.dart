@@ -6,6 +6,7 @@ import 'package:food_admin/provider/admin_provider.dart';
 import 'package:food_admin/provider/details_provider.dart';
 import 'package:food_admin/pages/admin_page.dart';
 import 'package:food_admin/pages/login_page.dart';
+
 import 'package:provider/provider.dart';
 
 void main() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:food_admin/pages/login_page.dart';
+import 'package:food_admin/pages/orders_page.dart';
 import 'package:food_admin/provider/admin_provider.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,14 @@ class MyDrawer extends StatelessWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const OrdersPage(),
+                    ),
+                  );
+                },
                 child: const ListTile(
                   leading: Icon(Ionicons.fast_food_outline),
                   title: Text('Orders'),
